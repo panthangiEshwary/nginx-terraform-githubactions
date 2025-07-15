@@ -1,5 +1,20 @@
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+    }
+    random = {
+      source = "hashicorp/random"
+    }
+  }
+}
+
 provider "aws" {
   region = var.region
+}
+
+resource "random_id" "suffix" {
+  byte_length = 4
 }
 
 resource "aws_security_group" "web_sg" {
@@ -22,8 +37,8 @@ resource "aws_security_group" "web_sg" {
 }
 
 resource "aws_instance" "web" {
-  ami           = var.ami
-  instance_type = var.instance_type
+  ami                    = var.ami
+  instance_type          = var.instance_type
   vpc_security_group_ids = [aws_security_group.web_sg.id]
 
   user_data = <<-EOF
