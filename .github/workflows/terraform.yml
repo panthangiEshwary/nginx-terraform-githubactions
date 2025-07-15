@@ -1,23 +1,21 @@
-name: Terraform CI/CD for Nginx Web App
+name: Terraform CI/CD for NGINX EC2
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       action:
-        description: "Select Terraform Action"
+        description: "Select Terraform action"
         required: true
         default: "plan"
         type: choice
         options:
+          - plan
           - apply
           - destroy
 
 jobs:
-  validate-plan:
-    if: github.event_name == 'push'
-    name: Validate & Plan (on push)
+  terraform:
+    name: Terraform ${{ github.event.inputs.action }}
     runs-on: ubuntu-latest
 
     env:
@@ -25,7 +23,8 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -37,25 +36,8 @@ jobs:
         run: terraform validate
 
       - name: Terraform Plan
-        run: terraform plan
-
-  apply-destroy:
-    if: github.event_name == 'workflow_dispatch'
-    name: Apply or Destroy (manually)
-    runs-on: ubuntu-latest
-
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Init
-        run: terraform init
+        if: ${{ github.event.inputs.action == 'plan' }}
+        run: terraform plan -out=tfplan
 
       - name: Terraform Apply
         if: ${{ github.event.inputs.action == 'apply' }}
